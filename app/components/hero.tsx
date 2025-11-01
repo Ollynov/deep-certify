@@ -32,14 +32,19 @@ export function Hero() {
 
           {/* CTA buttons */}
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button size="lg" className="group w-full sm:w-auto">
-              Start Detection
-              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Button>
+            <div className="electric-border-wrapper group w-full sm:w-auto">
+              <Button
+                size="lg"
+                className="relative w-full bg-primary text-primary-foreground hover:bg-primary/90  sm:w-auto"
+              >
+                Start Detection
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </div>
             <Button
               size="lg"
               variant="outline"
-              className="w-full sm:w-auto bg-transparent"
+              className="w-full border-2 border-primary/30 bg-transparent hover:border-primary/50 sm:w-auto"
             >
               Watch Demo
             </Button>
