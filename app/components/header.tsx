@@ -23,6 +23,12 @@ export function Header() {
             Features
           </Link>
           <Link
+            href="/pricing"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Pricing
+          </Link>
+          <Link
             href="#how-it-works"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >

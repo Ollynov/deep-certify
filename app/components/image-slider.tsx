@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 
 export function ImageComparisonSlider() {
-  const [sliderPosition, setSliderPosition] = useState(50);
+  const [sliderPosition, setSliderPosition] = useState(58);
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
