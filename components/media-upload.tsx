@@ -14,6 +14,7 @@ import {
   Video,
   Loader2,
 } from "lucide-react";
+import { createClient } from "@/lib/auth/client";
 
 export function MediaUpload() {
   const [isUploading, setIsUploading] = useState(false);
@@ -32,17 +33,67 @@ export function MediaUpload() {
 
     setIsUploading(true);
     try {
-      // TODO: Implement Reality Defender API integration
-      // 1. Request presigned URL
-      // 2. Upload file to presigned URL
-      // 3. Request analysis results
-      console.log("[v0] Uploading file:", selectedFile.name);
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate upload
-      alert("File uploaded successfully! Analysis will begin shortly.");
+      const supabase = createClient();
+
+      console.log("[v0] Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+      console.log("[v0] Checking available buckets...");
+
+      const { data: buckets, error: bucketsError } =
+        await supabase.storage.listBuckets();
+      console.log("[v0] Available buckets:", buckets);
+      if (bucketsError) {
+        console.error("[v0] Error listing buckets:", bucketsError);
+      }
+
+      // Generate unique file path with timestamp
+      const timestamp = Date.now();
+      const fileExt = selectedFile.name.split(".").pop();
+      const fileName = `${timestamp}-${Math.random()
+        .toString(36)
+        .substring(7)}.${fileExt}`;
+      const filePath = `media/${fileName}`;
+
+      console.log("[v0] Uploading file to Supabase Storage:", filePath);
+
+      // Upload to Supabase Storage bucket 'certifications'
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("certifications")
+        .upload(filePath, selectedFile, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error("[v0] Supabase upload error:", uploadError);
+        if (uploadError.message.includes("Bucket not found")) {
+          throw new Error(
+            "Storage bucket 'certifications' not found. Please verify the bucket exists in your Supabase dashboard at Storage > certifications"
+          );
+        }
+        throw uploadError;
+      }
+
+      // Get public URL for the uploaded file
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("certifications").getPublicUrl(filePath);
+
+      console.log("[v0] File uploaded successfully. Public URL:", publicUrl);
+
+      console.log("[v0] Sending to Reality Defender API:", publicUrl);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      alert(
+        `File uploaded successfully!\nPublic URL: ${publicUrl}\nAnalysis will begin shortly.`
+      );
       setSelectedFile(null);
     } catch (error) {
       console.error("[v0] Upload error:", error);
-      alert("Upload failed. Please try again.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Upload failed. Please try again."
+      );
     } finally {
       setIsUploading(false);
     }

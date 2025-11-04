@@ -11,7 +11,16 @@ import {
   LogOut,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { MediaUpload } from "@/components/media-upload";
+
+type VideoItem = {
+  id: number;
+  title: string;
+  thumbnail: string;
+  date: string;
+  confidence: number;
+};
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -21,49 +30,15 @@ export default async function DashboardPage() {
     redirect("/auth/login");
   }
 
-  // Mock data for demonstration - will be replaced with real data later
-  const mockVideos = {
-    real: [
-      {
-        id: 1,
-        title: "Press Conference 2024",
-        thumbnail: "/press-conference.png",
-        date: "2024-01-15",
-        confidence: 98,
-      },
-      {
-        id: 2,
-        title: "Interview Clip",
-        thumbnail: "/interview-panel.png",
-        date: "2024-01-14",
-        confidence: 95,
-      },
-    ],
-    fake: [
-      {
-        id: 3,
-        title: "Suspicious Video",
-        thumbnail: "/deepfake-video.jpg",
-        date: "2024-01-13",
-        confidence: 92,
-      },
-    ],
-    unsure: [
-      {
-        id: 4,
-        title: "Pending Analysis",
-        thumbnail: "/video-analysis-interface.png",
-        date: "2024-01-16",
-        confidence: 65,
-      },
-      {
-        id: 5,
-        title: "Low Quality Footage",
-        thumbnail: "/low-quality-video.jpg",
-        date: "2024-01-12",
-        confidence: 58,
-      },
-    ],
+  // Empty state - videos will be populated when user uploads content
+  const videos: {
+    real: VideoItem[];
+    fake: VideoItem[];
+    unsure: VideoItem[];
+  } = {
+    real: [],
+    fake: [],
+    unsure: [],
   };
 
   return (
@@ -136,7 +111,7 @@ export default async function DashboardPage() {
                 </h3>
                 <CheckCircle2 className="h-5 w-5 text-primary" />
               </div>
-              <p className="text-3xl font-bold">{mockVideos.real.length}</p>
+              <p className="text-3xl font-bold">{videos.real.length}</p>
             </div>
             <div className="rounded-lg border border-destructive/20 bg-card p-6">
               <div className="flex items-center justify-between mb-2">
@@ -145,7 +120,7 @@ export default async function DashboardPage() {
                 </h3>
                 <AlertTriangle className="h-5 w-5 text-destructive" />
               </div>
-              <p className="text-3xl font-bold">{mockVideos.fake.length}</p>
+              <p className="text-3xl font-bold">{videos.fake.length}</p>
             </div>
             <div className="rounded-lg border border-yellow-500/20 bg-card p-6">
               <div className="flex items-center justify-between mb-2">
@@ -154,7 +129,7 @@ export default async function DashboardPage() {
                 </h3>
                 <HelpCircle className="h-5 w-5 text-yellow-500" />
               </div>
-              <p className="text-3xl font-bold">{mockVideos.unsure.length}</p>
+              <p className="text-3xl font-bold">{videos.unsure.length}</p>
             </div>
           </div>
 
@@ -166,37 +141,49 @@ export default async function DashboardPage() {
                 <CheckCircle2 className="h-5 w-5 text-primary" />
                 <h2 className="text-xl font-semibold">Verified Real</h2>
                 <span className="text-sm text-muted-foreground">
-                  ({mockVideos.real.length})
+                  ({videos.real.length})
                 </span>
               </div>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {mockVideos.real.map((video) => (
-                  <div
-                    key={video.id}
-                    className="rounded-lg border border-primary/20 bg-card overflow-hidden hover:border-primary/40 transition-colors"
-                  >
-                    <img
-                      src={video.thumbnail || "/placeholder.svg"}
-                      alt={video.title}
-                      className="w-full h-48 object-cover"
-                    />
-                    <div className="p-4">
-                      <h3 className="font-semibold mb-1">{video.title}</h3>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        {video.date}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-primary font-medium">
-                          {video.confidence}% Confidence
-                        </span>
-                        <Button size="sm" variant="outline">
-                          View Details
-                        </Button>
+              {videos.real.length === 0 ? (
+                <div className="rounded-lg border-2 border-dashed border-primary/20 bg-card/50 p-12 text-center">
+                  <CheckCircle2 className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                  <p className="text-muted-foreground">
+                    No verified videos yet. Upload a video to get started.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {videos.real.map((video) => (
+                    <div
+                      key={video.id}
+                      className="rounded-lg border border-primary/20 bg-card overflow-hidden hover:border-primary/40 transition-colors"
+                    >
+                      <div className="relative w-full h-48">
+                        <Image
+                          src={video.thumbnail}
+                          alt={video.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-semibold mb-1">{video.title}</h3>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          {video.date}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-primary font-medium">
+                            {video.confidence}% Confidence
+                          </span>
+                          <Button size="sm" variant="outline">
+                            View Details
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </section>
 
             {/* Fake Videos */}
@@ -205,37 +192,49 @@ export default async function DashboardPage() {
                 <AlertTriangle className="h-5 w-5 text-destructive" />
                 <h2 className="text-xl font-semibold">Detected Deepfakes</h2>
                 <span className="text-sm text-muted-foreground">
-                  ({mockVideos.fake.length})
+                  ({videos.fake.length})
                 </span>
               </div>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {mockVideos.fake.map((video) => (
-                  <div
-                    key={video.id}
-                    className="rounded-lg border border-destructive/20 bg-card overflow-hidden hover:border-destructive/40 transition-colors"
-                  >
-                    <img
-                      src={video.thumbnail || "/placeholder.svg"}
-                      alt={video.title}
-                      className="w-full h-48 object-cover"
-                    />
-                    <div className="p-4">
-                      <h3 className="font-semibold mb-1">{video.title}</h3>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        {video.date}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-destructive font-medium">
-                          {video.confidence}% Fake
-                        </span>
-                        <Button size="sm" variant="outline">
-                          View Analysis
-                        </Button>
+              {videos.fake.length === 0 ? (
+                <div className="rounded-lg border-2 border-dashed border-destructive/20 bg-card/50 p-12 text-center">
+                  <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                  <p className="text-muted-foreground">
+                    No deepfakes detected yet.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {videos.fake.map((video) => (
+                    <div
+                      key={video.id}
+                      className="rounded-lg border border-destructive/20 bg-card overflow-hidden hover:border-destructive/40 transition-colors"
+                    >
+                      <div className="relative w-full h-48">
+                        <Image
+                          src={video.thumbnail}
+                          alt={video.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-semibold mb-1">{video.title}</h3>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          {video.date}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-destructive font-medium">
+                            {video.confidence}% Fake
+                          </span>
+                          <Button size="sm" variant="outline">
+                            View Analysis
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </section>
 
             {/* Unsure Videos */}
@@ -244,37 +243,49 @@ export default async function DashboardPage() {
                 <HelpCircle className="h-5 w-5 text-yellow-500" />
                 <h2 className="text-xl font-semibold">Under Review</h2>
                 <span className="text-sm text-muted-foreground">
-                  ({mockVideos.unsure.length})
+                  ({videos.unsure.length})
                 </span>
               </div>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {mockVideos.unsure.map((video) => (
-                  <div
-                    key={video.id}
-                    className="rounded-lg border border-yellow-500/20 bg-card overflow-hidden hover:border-yellow-500/40 transition-colors"
-                  >
-                    <img
-                      src={video.thumbnail || "/placeholder.svg"}
-                      alt={video.title}
-                      className="w-full h-48 object-cover"
-                    />
-                    <div className="p-4">
-                      <h3 className="font-semibold mb-1">{video.title}</h3>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        {video.date}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-yellow-500 font-medium">
-                          {video.confidence}% Uncertain
-                        </span>
-                        <Button size="sm" variant="outline">
-                          Re-analyze
-                        </Button>
+              {videos.unsure.length === 0 ? (
+                <div className="rounded-lg border-2 border-dashed border-yellow-500/20 bg-card/50 p-12 text-center">
+                  <HelpCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                  <p className="text-muted-foreground">
+                    No videos under review.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {videos.unsure.map((video) => (
+                    <div
+                      key={video.id}
+                      className="rounded-lg border border-yellow-500/20 bg-card overflow-hidden hover:border-yellow-500/40 transition-colors"
+                    >
+                      <div className="relative w-full h-48">
+                        <Image
+                          src={video.thumbnail}
+                          alt={video.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-semibold mb-1">{video.title}</h3>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          {video.date}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-yellow-500 font-medium">
+                            {video.confidence}% Uncertain
+                          </span>
+                          <Button size="sm" variant="outline">
+                            Re-analyze
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </section>
           </div>
         </div>
