@@ -101,8 +101,10 @@ export function MediaUpload() {
                   : "Click to select or drag and drop"}
               </p>
               <p className="text-sm text-muted-foreground">
-                Supports images (JPG, PNG, GIF), audio (MP3, WAV, M4A), and
-                video (MP4, MOV)
+                Supports images (JPG, PNG, GIF) and audio (MP3, WAV, M4A)
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Video coming soon! (MP4, MOV)
               </p>
             </label>
           </div>
