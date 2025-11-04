@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/auth/server";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/app/components/ui/button";
 import {
   Shield,
   Video,
@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { MediaUpload } from "@/components/media-upload";
+import { MediaUpload } from "@/app/components/media-upload";
 
 type VideoItem = {
   id: number;

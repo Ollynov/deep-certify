@@ -1,6 +1,6 @@
 import { Header } from "./../components/header";
 import { Footer } from "../components/footer";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/app/components/ui/button";
 import { Check, Shield, Zap, Clock, Users } from "lucide-react";
 import Link from "next/link";
 import { PricingTiers } from "./components/pricing-tiers";

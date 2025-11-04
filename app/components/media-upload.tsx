@@ -3,9 +3,14 @@
 import type React from "react";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/app/components/ui/tabs";
 import {
   Upload,
   LinkIcon,
@@ -16,15 +21,33 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/auth/client";
 
+interface AnalysisResult {
+  score: number;
+  status: "real" | "fake" | "unsure";
+  publicUrl: string;
+  fileName: string;
+  fileType: string;
+}
+
 export function MediaUpload() {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [mediaUrl, setMediaUrl] = useState("");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
+    null
+  );
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
+      if (file.type.startsWith("image/")) {
+        const preview = URL.createObjectURL(file);
+        setPreviewUrl(preview);
+      } else {
+        setPreviewUrl(null);
+      }
     }
   };
 
@@ -32,18 +55,9 @@ export function MediaUpload() {
     if (!selectedFile) return;
 
     setIsUploading(true);
+    setAnalysisResult(null);
     try {
       const supabase = createClient();
-
-      console.log("[v0] Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-      console.log("[v0] Checking available buckets...");
-
-      const { data: buckets, error: bucketsError } =
-        await supabase.storage.listBuckets();
-      console.log("[v0] Available buckets:", buckets);
-      if (bucketsError) {
-        console.error("[v0] Error listing buckets:", bucketsError);
-      }
 
       // Generate unique file path with timestamp
       const timestamp = Date.now();
@@ -65,12 +79,7 @@ export function MediaUpload() {
 
       if (uploadError) {
         console.error("[v0] Supabase upload error:", uploadError);
-        if (uploadError.message.includes("Bucket not found")) {
-          throw new Error(
-            "Storage bucket 'certifications' not found. Please verify the bucket exists in your Supabase dashboard at Storage > certifications"
-          );
-        }
-        throw uploadError;
+        throw new Error(`Upload failed: ${uploadError.message}`);
       }
 
       // Get public URL for the uploaded file
@@ -81,11 +90,40 @@ export function MediaUpload() {
       console.log("[v0] File uploaded successfully. Public URL:", publicUrl);
 
       console.log("[v0] Sending to Reality Defender API:", publicUrl);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const response = await fetch("/api/analyze-media", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fileUrl: publicUrl,
+          fileName: selectedFile.name,
+        }),
+      });
 
-      alert(
-        `File uploaded successfully!\nPublic URL: ${publicUrl}\nAnalysis will begin shortly.`
-      );
+      if (!response.ok) {
+        throw new Error("Analysis failed");
+      }
+
+      const result = await response.json();
+      console.log("[v0] Analysis result:", result);
+
+      let status: "real" | "fake" | "unsure" = "unsure";
+      if (result.score >= 0.7) {
+        status = "fake";
+      } else if (result.score <= 0.3) {
+        status = "real";
+      }
+
+      setAnalysisResult({
+        score: result.score,
+        status,
+        publicUrl,
+        fileName: selectedFile.name,
+        fileType: selectedFile.type,
+      });
+
+      // Reset file selection after successful analysis
       setSelectedFile(null);
     } catch (error) {
       console.error("[v0] Upload error:", error);
@@ -103,11 +141,42 @@ export function MediaUpload() {
     if (!mediaUrl) return;
 
     setIsUploading(true);
+    setAnalysisResult(null);
     try {
-      // TODO: Implement URL-based submission
       console.log("[v0] Submitting URL:", mediaUrl);
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate submission
-      alert("URL submitted successfully! Analysis will begin shortly.");
+      const response = await fetch("/api/analyze-media", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fileUrl: mediaUrl,
+          fileName: "url-submission",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Analysis failed");
+      }
+
+      const result = await response.json();
+      console.log("[v0] Analysis result:", result);
+
+      let status: "real" | "fake" | "unsure" = "unsure";
+      if (result.score >= 0.7) {
+        status = "fake";
+      } else if (result.score <= 0.3) {
+        status = "real";
+      }
+
+      setAnalysisResult({
+        score: result.score,
+        status,
+        publicUrl: mediaUrl,
+        fileName: "url-submission",
+        fileType: "unknown",
+      });
+
       setMediaUrl("");
     } catch (error) {
       console.error("[v0] URL submission error:", error);
@@ -152,10 +221,8 @@ export function MediaUpload() {
                   : "Click to select or drag and drop"}
               </p>
               <p className="text-sm text-muted-foreground">
-                Supports images (JPG, PNG, GIF) and audio (MP3, WAV, M4A)
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Video coming soon! (MP4, MOV)
+                Supports images (JPG, PNG, GIF), audio (MP3, WAV, M4A), and
+                video (MP4, MOV)
               </p>
             </label>
           </div>
@@ -163,14 +230,18 @@ export function MediaUpload() {
           {selectedFile && (
             <div className="flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center">
-                  {selectedFile.type.startsWith("image/") && (
+                <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center overflow-hidden">
+                  {previewUrl && selectedFile.type.startsWith("image/") ? (
+                    <img
+                      src={previewUrl || "/placeholder.svg"}
+                      alt="Preview"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : selectedFile.type.startsWith("image/") ? (
                     <ImageIcon className="h-5 w-5 text-primary" />
-                  )}
-                  {selectedFile.type.startsWith("audio/") && (
+                  ) : selectedFile.type.startsWith("audio/") ? (
                     <Music className="h-5 w-5 text-primary" />
-                  )}
-                  {selectedFile.type.startsWith("video/") && (
+                  ) : (
                     <Video className="h-5 w-5 text-primary" />
                   )}
                 </div>
@@ -245,6 +316,35 @@ export function MediaUpload() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {analysisResult && (
+        <div className="mt-4 p-4 rounded-lg border border-primary/20 bg-card">
+          <div className="flex items-start gap-4">
+            {analysisResult.status === "real" && (
+              <CheckCircle2 className="h-6 w-6 text-green-500 flex-shrink-0" />
+            )}
+            {analysisResult.status === "fake" && (
+              <XCircle className="h-6 w-6 text-red-500 flex-shrink-0" />
+            )}
+            {analysisResult.status === "unsure" && (
+              <AlertCircle className="h-6 w-6 text-yellow-500 flex-shrink-0" />
+            )}
+            <div className="flex-1">
+              <h4 className="font-semibold mb-1">
+                {analysisResult.status === "real" && "Verified Real"}
+                {analysisResult.status === "fake" && "Deepfake Detected"}
+                {analysisResult.status === "unsure" && "Inconclusive"}
+              </h4>
+              <p className="text-sm text-muted-foreground mb-2">
+                Confidence Score: {(analysisResult.score * 100).toFixed(1)}%
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {analysisResult.fileName}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mt-4 p-4 rounded-lg bg-muted/50 border border-primary/10">
         <p className="text-xs text-muted-foreground">
