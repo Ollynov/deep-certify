@@ -18,6 +18,9 @@ import {
   Music,
   Video,
   Loader2,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/auth/client";
 
