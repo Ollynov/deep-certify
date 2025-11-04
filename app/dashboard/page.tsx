@@ -3,7 +3,6 @@ import { createClient } from "@/lib/auth/server";
 import { Button } from "@/components/ui/button";
 import {
   Shield,
-  Upload,
   Video,
   AlertTriangle,
   CheckCircle2,
@@ -12,6 +11,7 @@ import {
   LogOut,
 } from "lucide-react";
 import Link from "next/link";
+import { MediaUpload } from "@/components/media-upload";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -117,27 +117,15 @@ export default async function DashboardPage() {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-balance mb-2">
-              Video Certification
+              Media Certification
             </h1>
             <p className="text-muted-foreground">
-              Analyze and certify the authenticity of videos
+              Analyze and certify the authenticity of images, audio, and videos
             </p>
           </div>
 
           {/* Upload Section */}
-          <div className="mb-8 rounded-lg border-2 border-dashed border-primary/30 bg-card/50 p-8 text-center hover:border-primary/50 transition-colors cursor-pointer">
-            <Upload className="h-12 w-12 text-primary mx-auto mb-4" />
-            <h3 className="font-semibold mb-2">
-              Upload Video for Certification
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Drag and drop or click to upload a video file
-            </p>
-            <Button className="bg-primary hover:bg-primary/90">
-              <Upload className="h-4 w-4 mr-2" />
-              Choose File
-            </Button>
-          </div>
+          <MediaUpload />
 
           {/* Stats Overview */}
           <div className="grid gap-4 md:grid-cols-3 mb-8">
