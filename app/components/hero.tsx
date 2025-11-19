@@ -1,5 +1,6 @@
 import { Button } from "@/app/components/ui/button";
 import { ArrowRight, Shield, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
 
 export function Hero() {
   return (
@@ -34,20 +35,23 @@ export function Hero() {
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <div className="electric-border-wrapper group w-full sm:w-auto">
               <Button
+                asChild
                 size="lg"
                 className="relative w-full bg-primary text-primary-foreground hover:bg-primary/90  sm:w-auto"
               >
-                Start Detection
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                <Link href="/auth/sign-up">
+                  Start Detection
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Link>
               </Button>
             </div>
-            <Button
+            {/* <Button
               size="lg"
               variant="outline"
               className="w-full border-2 border-primary/30 bg-transparent hover:border-primary/50 sm:w-auto"
             >
               Watch Demo
-            </Button>
+            </Button> */}
           </div>
 
           {/* Trust indicators */}
