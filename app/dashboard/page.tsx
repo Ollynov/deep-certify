@@ -23,11 +23,19 @@ type VideoItem = {
 };
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
+  let user;
 
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data?.user) {
-    redirect("/auth/login");
+  try {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data?.user) {
+      redirect("/auth/login");
+    }
+    user = data.user;
+  } catch (error) {
+    console.error("Dashboard auth error:", error);
+    redirect("/auth/error?error=service_unavailable");
   }
 
   // Empty state - videos will be populated when user uploads content
@@ -69,9 +77,7 @@ export default async function DashboardPage() {
 
         <div className="absolute bottom-6 left-6 right-6">
           <div className="border-t border-primary/20 pt-4">
-            <p className="text-xs text-muted-foreground mb-2">
-              {data.user.email}
-            </p>
+            <p className="text-xs text-muted-foreground mb-2">{user.email}</p>
             <form action="/auth/signout" method="post">
               <Button
                 variant="ghost"

@@ -13,11 +13,19 @@ import {
 import Link from "next/link";
 
 export default async function SettingsPage() {
-  const supabase = await createClient();
+  let user;
 
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data?.user) {
-    redirect("/auth/login");
+  try {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data?.user) {
+      redirect("/auth/login");
+    }
+    user = data.user;
+  } catch (error) {
+    console.error("Settings auth error:", error);
+    redirect("/auth/error?error=service_unavailable");
   }
 
   return (
@@ -48,9 +56,7 @@ export default async function SettingsPage() {
 
         <div className="absolute bottom-6 left-6 right-6">
           <div className="border-t border-primary/20 pt-4">
-            <p className="text-xs text-muted-foreground mb-2">
-              {data.user.email}
-            </p>
+            <p className="text-xs text-muted-foreground mb-2">{user.email}</p>
             <form action="/auth/signout" method="post">
               <Button
                 variant="ghost"
@@ -85,7 +91,7 @@ export default async function SettingsPage() {
               <div className="space-y-4">
                 <div>
                   <label className="text-sm text-muted-foreground">Email</label>
-                  <p className="font-medium">{data.user.email}</p>
+                  <p className="font-medium">{user.email}</p>
                 </div>
                 <Button variant="outline" size="sm">
                   Update Profile
